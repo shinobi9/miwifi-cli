@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run one of the samples.
+# The first argument must be the name of the sample task (e.g. echo).
+# Any remaining arguments are forwarded to the sample's argv.
+
+project=miwifi-cli
+cli=miwifi
+shift 1
+
+./gradlew --quiet -w :installDist
+
+./build/install/${project}/bin/${cli} "$@"
