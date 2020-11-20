@@ -1,16 +1,19 @@
 package shinobi9.miwifi
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.NoOpCliktCommand
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import com.jakewharton.picnic.BorderStyle
 import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
 import io.github.rybalkinsd.kohttp.jackson.ext.toJson
 
-class DeviceCommand : CliktCommand(name = "device", help = "device operation") {
-    override fun run() = Unit
-
+class DeviceCommand : NoOpCliktCommand(name = "device", help = "device operation") {
     class DeviceListCommand : CliktCommand(name = "list", help = "show devices in table") {
+        private val debug by option("-D", "--debug", help = "show request detail").flag("--no-debug", default = false)
         override fun run() {
+            miwifiClient.debugMode = debug
             val deviceList = miwifiClient.deviceList().toJson()["list"]
             table {
                 style {

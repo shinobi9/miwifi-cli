@@ -18,9 +18,9 @@ import javax.script.Invocable
 import javax.script.ScriptEngineManager
 
 class MiwifiClient(
-    val routerHost: String = "192.168.31.1",
-    val debugMode: Boolean = false,
-    val password: String = "",
+    var routerHost: String = "192.168.31.1",
+    var debugMode: Boolean = false,
+    var password: String = "",
 ) {
     companion object {
         const val dataFile = "data.json"
@@ -29,9 +29,11 @@ class MiwifiClient(
     internal val baseUrl
         get() = "http://$routerHost/cgi-bin/luci"
 
-    internal val client = defaultHttpClient.fork {
-        interceptors {
-            if (debugMode) +HttpLoggingInterceptor()
+    internal val client = lazy {
+        defaultHttpClient.fork {
+            interceptors {
+                if (debugMode) +HttpLoggingInterceptor()
+            }
         }
     }
 
@@ -50,7 +52,7 @@ class MiwifiClient(
 
     fun login() {
         val map = transform(password)
-        httpPost(client) {
+        httpPost(client.value) {
             url("$baseUrl/api/xqsystem/login")
             body {
                 form {
@@ -75,20 +77,20 @@ class MiwifiClient(
         return (invocable.invokeFunction("transform", password) as ScriptObjectMirror).toMap<String, Any>()
     }
 
-    fun detail() = checkLogin { httpGet { url("/api/xqnetwork/wifi_detail_all".withToken()) } }
+    fun detail() = checkLogin { httpGet(client.value) { url("/api/xqnetwork/wifi_detail_all".withToken()) } }
 
-    fun status() = checkLogin { httpGet { url("/api/misystem/status".withToken()) } }
+    fun status() = checkLogin { httpGet(client.value) { url("/api/misystem/status".withToken()) } }
 
-    fun reboot() = checkLogin { httpGet { url("/api/xqsystem/reboot".withToken()) } }
+    fun reboot() = checkLogin { httpGet(client.value) { url("/api/xqsystem/reboot".withToken()) } }
 
     fun macBindInfo() =
-        checkLogin { httpGet { url("/api/xqnetwork/macbind_info".withToken()) } }
+        checkLogin { httpGet(client.value) { url("/api/xqnetwork/macbind_info".withToken()) } }
 
-    fun wanInfo() = checkLogin { httpGet { url("/api/xqnetwork/wan_info".withToken()) } }
+    fun wanInfo() = checkLogin { httpGet(client.value) { url("/api/xqnetwork/wan_info".withToken()) } }
 
     @Suppress("FunctionName")
     private fun _block(mac: String, block: Boolean) = checkLogin {
-        httpGet {
+        httpGet(client.value) {
             url("/api/xqsystem/set_mac_filter".withToken())
             param {
                 "mac" to mac
@@ -98,7 +100,7 @@ class MiwifiClient(
     }
 
     fun deviceList() = checkLogin {
-        httpGet { url("/api/misystem/devicelist".withToken()) }
+        httpGet(client.value) { url("/api/misystem/devicelist".withToken()) }
     }
 
     fun block(mac: String) = _block(mac, true)

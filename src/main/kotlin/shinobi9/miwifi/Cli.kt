@@ -1,9 +1,9 @@
 package shinobi9.miwifi
 
 import com.github.ajalt.clikt.core.subcommands
-import shinobi9.miwifi.DeviceCommand.DeviceListCommand
+import com.github.ajalt.clikt.parameters.options.versionOption
 
-lateinit var miwifiClient: MiwifiClient
+val miwifiClient: MiwifiClient = MiwifiClient()
 
 fun main(args: Array<String>): Unit = MiwifiCommand()
     .subcommands(
@@ -11,6 +11,7 @@ fun main(args: Array<String>): Unit = MiwifiCommand()
         StatusCommand(),
         LoginCommand(),
         LogoutCommand(),
-        DeviceCommand().subcommands(DeviceListCommand())
+        DeviceCommand().subcommands(DeviceCommand.DeviceListCommand())
     )
+    .versionOption("0.1", names = setOf("--version", "-v"), message = { "miwifi-cli 0.0.1" })
     .main(args)
