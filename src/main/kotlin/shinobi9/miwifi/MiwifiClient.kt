@@ -11,6 +11,9 @@ import io.github.rybalkinsd.kohttp.interceptors.logging.HttpLoggingInterceptor
 import io.github.rybalkinsd.kohttp.jackson.ext.toJsonOrNull
 import jdk.nashorn.api.scripting.ScriptObjectMirror
 import okhttp3.Response
+import shinobi9.miwifi.error.LoginFailureException
+import shinobi9.miwifi.persist.persistSupport
+import java.util.*
 import javax.script.Invocable
 import javax.script.ScriptEngineManager
 
@@ -19,6 +22,10 @@ class MiwifiClient(
     val debugMode: Boolean = false,
     val password: String = "",
 ) {
+    companion object {
+        const val dataFile = "data.json"
+    }
+
     internal val baseUrl
         get() = "http://$routerHost/cgi-bin/luci"
 
@@ -31,12 +38,17 @@ class MiwifiClient(
     private var token: String? = null
 
     fun checkLogin(block: () -> Response): Response {
-        token ?: login(password)
+        val readToken = persistSupport.load(dataFile)["token"] as? String
+        if (readToken.isNullOrEmpty()) throw LoginFailureException("you should login at first") else token = readToken
         return block()
     }
 
-    fun login(password: String) {
-        println("login ...")
+    fun logout() {
+        token = null
+        persistSupport.save(dataFile, Properties())
+    }
+
+    fun login() {
         val map = transform(password)
         httpPost(client) {
             url("$baseUrl/api/xqsystem/login")
@@ -45,12 +57,13 @@ class MiwifiClient(
                     map.forEach { (t, u) -> t to u }
                 }
             }
-        }.toJsonOrNull()?.get("token")?.run { token = asText() } ?: error("login failure , check password!")
-        println("login success")
+        }.toJsonOrNull()?.get("token")?.run { token = asText() }
+            ?: throw LoginFailureException("login failure , check password!")
+        persistSupport.save(dataFile, Properties().apply { setProperty("token", token) })
     }
 
     private fun String.withToken(): String {
-        return token?.let { return@let "$baseUrl/;stok=$token$this" } ?: error("未登录")
+        return token?.let { return@let "$baseUrl/;stok=$token$this" } ?: throw LoginFailureException("未登录")
     }
 
     private fun transform(password: String): Map<String, Any> {

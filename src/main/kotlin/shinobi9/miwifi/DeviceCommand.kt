@@ -19,18 +19,18 @@ class DeviceCommand : CliktCommand(name = "device", help = "device operation") {
                 header {
                     cellStyle {
                         alignment = TextAlignment.BottomCenter
-                        border = true
+                        border = false
                     }
-                    row("mac", "ip", "status", "name")
+                    row("MAC", "IP", "STATUS", "NAME")
                 }
                 cellStyle {
                     paddingLeft = 1
                     paddingRight = 1
-                    border = true
+                    border = false
                 }
                 body {
                     cellStyle {
-                        alignment = TextAlignment.MiddleRight
+                        alignment = TextAlignment.MiddleLeft
                     }
                     deviceList.forEach { dev ->
                         val mac = dev["mac"].asText()
@@ -45,10 +45,9 @@ class DeviceCommand : CliktCommand(name = "device", help = "device operation") {
                         }
                     }
                 }
+
                 footer {
-                    cellStyle {
-                        border = true
-                    }
+                    cellStyle { borderTop = true }
                     row("count", deviceList.size())
                 }
             }.also { echo(it) }
