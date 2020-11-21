@@ -1,17 +1,16 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
-package shinobi9.miwifi
+package shinobi9.miwifi.core
 
-import io.github.rybalkinsd.kohttp.client.defaultHttpClient
-import io.github.rybalkinsd.kohttp.client.fork
 import io.github.rybalkinsd.kohttp.dsl.httpGet
 import io.github.rybalkinsd.kohttp.dsl.httpPost
 import io.github.rybalkinsd.kohttp.ext.url
-import io.github.rybalkinsd.kohttp.interceptors.logging.HttpLoggingInterceptor
 import io.github.rybalkinsd.kohttp.jackson.ext.toJsonOrNull
 import jdk.nashorn.api.scripting.ScriptObjectMirror
+import okhttp3.OkHttpClient
 import okhttp3.Response
 import shinobi9.miwifi.error.LoginFailureException
+import shinobi9.miwifi.evalResource
 import shinobi9.miwifi.persist.persistSupport
 import java.util.*
 import javax.script.Invocable
@@ -29,17 +28,11 @@ class MiwifiClient(
     internal val baseUrl
         get() = "http://$routerHost/cgi-bin/luci"
 
-    internal val client = lazy {
-        defaultHttpClient.fork {
-            interceptors {
-                if (debugMode) +HttpLoggingInterceptor()
-            }
-        }
-    }
+    internal val client: OkHttpClient by HttpClientDelegate()
 
     private var token: String? = null
 
-    fun checkLogin(block: () -> Response): Response {
+    private inline fun checkLogin(block: () -> Response): Response {
         val readToken = persistSupport.load(dataFile)["token"] as? String
         if (readToken.isNullOrEmpty()) throw LoginFailureException("you should login at first") else token = readToken
         return block()
@@ -52,7 +45,7 @@ class MiwifiClient(
 
     fun login() {
         val map = transform(password)
-        httpPost(client.value) {
+        httpPost(client) {
             url("$baseUrl/api/xqsystem/login")
             body {
                 form {
@@ -77,20 +70,20 @@ class MiwifiClient(
         return (invocable.invokeFunction("transform", password) as ScriptObjectMirror).toMap<String, Any>()
     }
 
-    fun detail() = checkLogin { httpGet(client.value) { url("/api/xqnetwork/wifi_detail_all".withToken()) } }
+    fun detail() = checkLogin { httpGet(client) { url("/api/xqnetwork/wifi_detail_all".withToken()) } }
 
-    fun status() = checkLogin { httpGet(client.value) { url("/api/misystem/status".withToken()) } }
+    fun status() = checkLogin { httpGet(client) { url("/api/misystem/status".withToken()) } }
 
-    fun reboot() = checkLogin { httpGet(client.value) { url("/api/xqsystem/reboot".withToken()) } }
+    fun reboot() = checkLogin { httpGet(client) { url("/api/xqsystem/reboot".withToken()) } }
 
     fun macBindInfo() =
-        checkLogin { httpGet(client.value) { url("/api/xqnetwork/macbind_info".withToken()) } }
+        checkLogin { httpGet(client) { url("/api/xqnetwork/macbind_info".withToken()) } }
 
-    fun wanInfo() = checkLogin { httpGet(client.value) { url("/api/xqnetwork/wan_info".withToken()) } }
+    fun wanInfo() = checkLogin { httpGet(client) { url("/api/xqnetwork/wan_info".withToken()) } }
 
     @Suppress("FunctionName")
     private fun _block(mac: String, block: Boolean) = checkLogin {
-        httpGet(client.value) {
+        httpGet(client) {
             url("/api/xqsystem/set_mac_filter".withToken())
             param {
                 "mac" to mac
@@ -100,7 +93,7 @@ class MiwifiClient(
     }
 
     fun deviceList() = checkLogin {
-        httpGet(client.value) { url("/api/misystem/devicelist".withToken()) }
+        httpGet(client) { url("/api/misystem/devicelist".withToken()) }
     }
 
     fun block(mac: String) = _block(mac, true)

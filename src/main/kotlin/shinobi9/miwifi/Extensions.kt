@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.rybalkinsd.kohttp.jackson.ext.toJson
 import okhttp3.Response
+import shinobi9.miwifi.core.MiwifiClient
 import java.net.URL
 import javax.script.ScriptEngine
 

@@ -1,4 +1,4 @@
-import shinobi9.miwifi.MiwifiClient
+import shinobi9.miwifi.core.MiwifiClient
 
 fun main() {
     userDir()

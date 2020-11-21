@@ -2,6 +2,8 @@ package shinobi9.miwifi
 
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.versionOption
+import shinobi9.miwifi.command.*
+import shinobi9.miwifi.core.MiwifiClient
 
 val miwifiClient: MiwifiClient = MiwifiClient()
 

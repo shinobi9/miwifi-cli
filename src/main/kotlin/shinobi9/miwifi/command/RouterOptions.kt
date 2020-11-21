@@ -1,4 +1,4 @@
-// package shinobi9.miwifi
+package shinobi9.miwifi.command// package shinobi9.miwifi
 //
 // import com.github.ajalt.clikt.parameters.groups.OptionGroup
 // import com.github.ajalt.clikt.parameters.options.default
